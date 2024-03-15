@@ -2,7 +2,7 @@ locals {
 }
 
 terraform {  
-  source = "git::https://github.com/alexiscaspell/terraform-modules.git//argocd?ref=master"
+  source = "git::https://github.com/alexiscaspell/terraform-modules.git//argocd?ref=main"
 }
 
 inputs = {

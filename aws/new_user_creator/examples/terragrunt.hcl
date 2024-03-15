@@ -2,7 +2,7 @@ locals {
 }
 
 terraform {  
-  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/new_user_creator?ref=master"
+  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/new_user_creator?ref=main"
 }
 
 inputs = {

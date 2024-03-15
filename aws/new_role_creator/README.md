@@ -19,7 +19,7 @@ Here's an example of how to use this module:
 
 ```hcl
 module "iam_role" {
-  source           = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/new_role_creator?ref=master"
+  source           = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/new_role_creator?ref=main"
   aws_region       = "us-east-1"  # AWS region
   role_name        = "new_role"   # Name of the new IAM role
   trust_policy = "path/to/trust-policy.json"

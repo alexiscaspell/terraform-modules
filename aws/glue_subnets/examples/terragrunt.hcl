@@ -2,7 +2,7 @@ locals {
 }
 
 terraform {  
-  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/glue_subnets?ref=master"
+  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/glue_subnets?ref=main"
 }
 
 inputs = {

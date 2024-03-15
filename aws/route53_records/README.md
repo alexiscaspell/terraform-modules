@@ -14,7 +14,7 @@ Here's an example of how to use this module:
 
 ```hcl
 module "route53_dns" {
-  source          = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/route53_records?ref=master"
+  source          = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/route53_records?ref=main"
 
   hosted_zone_id  = "your-route53-hosted-zone-id"
 

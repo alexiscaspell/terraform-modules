@@ -2,7 +2,7 @@ locals {
 }
 
 terraform {  
-  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/new_role_creator?ref=master"
+  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/new_role_creator?ref=main"
 }
 
 inputs = {

@@ -20,7 +20,7 @@ Here's an example of how to use this module:
 
 ```hcl
 module "iam_user" {
-  source       = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/new_user_creator?ref=master"
+  source       = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/new_user_creator?ref=main"
   aws_region   = "us-east-1"  # AWS region
   user_name    = "new_user"   # Name of the new IAM user
   policies     = ["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"]

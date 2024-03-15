@@ -2,7 +2,7 @@ locals {
 }
 
 terraform {  
-  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/route53_records?ref=master"
+  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/route53_records?ref=main"
 }
 
 inputs = {

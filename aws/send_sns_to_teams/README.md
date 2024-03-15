@@ -15,7 +15,7 @@ Here's an example of how to use this module:
 
 ```hcl
 module "lambda_function" {
-  source                = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/send_sns_to_teams?ref=master"
+  source                = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/send_sns_to_teams?ref=main"
   lambda_function_name  = "MyLambdaFunction"
   lambda_timeout        = "15"
   retention_in_days     = "1"

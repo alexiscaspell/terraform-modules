@@ -2,7 +2,7 @@ locals {
 }
 
 terraform {  
-  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/send_sns_to_teams?ref=master"
+  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/send_sns_to_teams?ref=main"
 }
 
 inputs = {

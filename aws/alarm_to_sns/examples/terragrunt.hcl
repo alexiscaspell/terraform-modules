@@ -2,7 +2,7 @@ locals {
 }
 
 terraform {  
-  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/alarm_to_sns?ref=master"
+  source = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/alarm_to_sns?ref=main"
 }
 
 inputs = {

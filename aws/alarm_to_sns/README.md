@@ -14,7 +14,7 @@ Here's an example of how to use this module:
 
 ```hcl
 module "cloudwatch_alarm" {
-  source                  = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/alarm_to_sns?ref=master"
+  source                  = "git::https://github.com/alexiscaspell/terraform-modules.git//aws/alarm_to_sns?ref=main"
   aws_region              = "us-east-1"  # AWS region
   dimensions              = {
     key1 = "value1"

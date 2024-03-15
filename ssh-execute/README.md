@@ -8,7 +8,7 @@ Here's an example of how to use this module:
 
 ```hcl
 module "ssh_executor" {
-  source       = "git::https://github.com/alexiscaspell/terraform-ssh-executor.git//ssh-execute?ref=master"
+  source       = "git::https://github.com/alexiscaspell/terraform-ssh-executor.git//ssh-execute?ref=main"
   ssh_host     = "example.com"  # SSH host to connect to
   ssh_user     = "username"     # SSH user for authentication
   ssh_password = "password"     # SSH password for authentication
