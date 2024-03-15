@@ -8,7 +8,6 @@ Here's an example of how to use this module:
 
 ```hcl
 module "argocd" {
-  source           = "./argocd"
   name             = "argocd"  # Name of the ArgoCD installation
   argocd_version   = "2.1.2"   # Version of ArgoCD to install
   namespace        = "argocd"  # Namespace to install ArgoCD into

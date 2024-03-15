@@ -2,7 +2,7 @@ locals {
 }
 
 terraform {  
-  source = "git::https://github.com/alexiscaspell/terraform-ssh-executor.git//ssh-execute?ref=master"
+  source = "git::https://github.com/alexiscaspell/terraform-modules.git//ssh-execute?ref=master"
 }
 
 inputs = {
