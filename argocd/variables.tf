@@ -28,3 +28,12 @@ variable "sets" {
   type    = map
   default = {}
 }
+
+variable "repositories" {
+  type  = list(object({
+    name = string
+    url = string
+    password = string
+  }))
+  description = "List of Repositories to add to ArgoCD"
+}

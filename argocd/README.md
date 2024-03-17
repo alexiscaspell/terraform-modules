@@ -13,6 +13,13 @@ module "argocd" {
   namespace        = "argocd"  # Namespace to install ArgoCD into
   kubeconfig_path  = "/path/to/your/kubeconfig"  # Path of the kubeconfig file
   kube_context     = "default"  # Context of kubeconfig to use
+  repositories = [
+    {
+      name     = "example-repo"
+      url      = "https://example.com/repo"
+      password = "secretpassword"
+    }
+  ]
 }
 ```
 
@@ -26,6 +33,8 @@ module "argocd" {
 | kubeconfig_path  | Path of the kubeconfig file                       | `string`| n/a     | yes      |
 | kube_context     | Context of kubeconfig to use                      | `string`| default | no       |
 | sets             | Variables of values.yaml to replace in Helm chart | `map`   | `{}`    | no       |
+| repositories     | List of Repositories to add to ArgoCD            | `list(object({name = string, url = string, password = string}))` | `[]` | no |
+
 
 ## Outputs
 
