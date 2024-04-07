@@ -38,6 +38,37 @@ stringData:
   url: ${var.repositories[count.index].url}
   password: ${var.repositories[count.index].password}
 EOF
+
+    depends_on = [ helm_release.argocd ]
+}
+
+resource "kubectl_manifest" "argocd_application" {
+    count = length(var.applications)
+
+    yaml_body = <<EOF
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${var.applications[count.index].name}
+  namespace: ${var.namespace}
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${var.applications[count.index].namespace}
+  project: ${var.applications[count.index].project}
+  source:
+    path: ${var.applications[count.index].path}
+    repoURL: ${var.applications[count.index].repo_url}
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+EOF
+
+    depends_on = [ helm_release.argocd , kubectl_manifest.argocd_repository]
 }
 
 resource "helm_release" "argocd" {
@@ -47,6 +78,12 @@ resource "helm_release" "argocd" {
   create_namespace = true
   repository = "oci://registry-1.docker.io/bitnamicharts"
   version  = var.argocd_version
+
+  # recreate_pods = true
+  # force_update  = true
+  atomic        = true
+  wait          = false
+  replace       = true
 
   dynamic "set" {
     for_each = var.sets

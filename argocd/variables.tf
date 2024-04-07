@@ -37,3 +37,14 @@ variable "repositories" {
   }))
   description = "List of Repositories to add to ArgoCD"
 }
+
+variable "applications" {
+  type  = list(object({
+    name = string
+    repo_url = string
+    path = string
+    project = string
+    namespace = string
+  }))
+  description = "List of Applications to add to ArgoCD"
+}
