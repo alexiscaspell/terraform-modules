@@ -1,11 +1,25 @@
 terraform {
-  required_version = ">= 0.13"
+  required_version = ">= 1.12"
 
   required_providers {
     kubectl = {
       source  = "gavinbunney/kubectl"
-      version = ">= 1.7.0"
+      version = ">= 1.19.0"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 3.0.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.37.0"
+    }
+  }
+}
+
+provider "helm" {
+  kubernetes = {
+    config_path = var.kubeconfig_path
   }
 }
 
@@ -15,12 +29,16 @@ provider "kubectl" {
     config_context = var.kube_context
 }
 
-provider "helm" {
-  kubernetes {
-    config_path = var.kubeconfig_path
-    config_context = var.kube_context
-  }
+provider "kubernetes" {
+  config_path = var.kubeconfig_path
 }
+
+# provider "helm" {
+#   kubernetes {
+#     config_path = var.kubeconfig_path
+#     config_context = var.kube_context
+#   }
+# }
 
 resource "kubectl_manifest" "argocd_repository" {
     count = length(var.repositories)
@@ -39,7 +57,7 @@ stringData:
   password: ${var.repositories[count.index].password}
 EOF
 
-    depends_on = [ helm_release.argocd ]
+  depends_on = [ helm_release.argocd ]
 }
 
 resource "kubectl_manifest" "argocd_application" {
@@ -72,6 +90,7 @@ EOF
 }
 
 resource "helm_release" "argocd" {
+  provider = helm
   chart      = "argo-cd"
   name       = var.name
   namespace  = var.namespace
@@ -85,11 +104,11 @@ resource "helm_release" "argocd" {
   wait          = false
   replace       = true
 
-  dynamic "set" {
-    for_each = var.sets
-    content {
-      name  = set.key
-      value = set.value
+  set = [
+    for key, value in var.sets : {
+      name  = key
+      value = value
     }
-  }
+  ]
 }
+
