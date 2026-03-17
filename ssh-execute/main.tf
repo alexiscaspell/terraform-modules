@@ -1,100 +1,101 @@
 provider "null" {}
 
 locals {
-  parent_dir = var.remote_directory!=null ? var.remote_directory : "/tmp"
-  execution_dir = var.local_directory!=null ? "${local.parent_dir}/${basename(var.local_directory)}" : local.parent_dir
-  script_file_name = basename(var.script_path)
+  executions = {
+    for idx, e in var.executions : tostring(idx) => merge(e, {
+      parent_dir       = coalesce(e.remote_directory, "/tmp")
+      execution_dir    = e.local_directory != null ? "${coalesce(e.remote_directory, "/tmp")}/${basename(e.local_directory)}" : coalesce(e.remote_directory, "/tmp")
+      script_file_name = basename(e.script_path)
+    })
+  }
+  exec_only     = { for k, e in local.executions : k => e if e.local_directory == null }
+  exec_and_copy = { for k, e in local.executions : k => e if e.local_directory != null }
 }
 
-
 resource "null_resource" "ssh_executor" {
-
-  count = var.local_directory!=null ? 0 : 1 
+  for_each = local.exec_only
 
   triggers = {
     always_run = timestamp()
   }
 
   provisioner "file" {
-    source      = var.script_path
-    destination = "${local.execution_dir}/${basename(var.script_path)}"
+    source      = each.value.script_path
+    destination = "${each.value.execution_dir}/${each.value.script_file_name}"
 
     connection {
-      type        = "ssh"
-      user        = var.ssh_user
-      host        = var.ssh_host
-      port     = var.ssh_port
-      password = var.ssh_password
+      type     = "ssh"
+      host     = each.value.ssh_host
+      port     = each.value.ssh_port
+      user     = each.value.ssh_user
+      password = each.value.ssh_password
     }
   }
-  
-  provisioner "remote-exec" {
 
+  provisioner "remote-exec" {
     inline = [
-      "chmod +x ${local.execution_dir}/${local.script_file_name}",
-      "cd ${local.execution_dir} && ./${local.script_file_name} ${join(" ",var.script_arguments)}",
-      "if [ '${var.delete_script}' = true ]; then rm ${local.execution_dir}/${local.script_file_name}; fi",
+      "chmod +x ${each.value.execution_dir}/${each.value.script_file_name}",
+      "cd ${each.value.execution_dir} && ./${each.value.script_file_name} ${join(" ", each.value.script_arguments)}",
+      "if [ '${each.value.delete_script}' = true ]; then rm ${each.value.execution_dir}/${each.value.script_file_name}; fi",
     ]
 
     connection {
-      type        = "ssh"
-      user        = var.ssh_user
-      host        = var.ssh_host
-      port     = var.ssh_port
-      password = var.ssh_password
+      type     = "ssh"
+      host     = each.value.ssh_host
+      port     = each.value.ssh_port
+      user     = each.value.ssh_user
+      password = each.value.ssh_password
     }
   }
-
 }
 
 resource "null_resource" "ssh_executor_and_copy" {
-  count = var.local_directory!=null ? 1 : 0 
+  for_each = local.exec_and_copy
 
   triggers = {
     always_run = timestamp()
   }
 
   provisioner "file" {
-    source      = var.local_directory
-    destination = local.parent_dir
+    source      = each.value.local_directory
+    destination = each.value.parent_dir
 
     connection {
-      type        = "ssh"
-      user        = var.ssh_user
-      host        = var.ssh_host
-      port     = var.ssh_port
-      password = var.ssh_password
+      type     = "ssh"
+      host     = each.value.ssh_host
+      port     = each.value.ssh_port
+      user     = each.value.ssh_user
+      password = each.value.ssh_password
     }
   }
 
   provisioner "file" {
-    source      = var.script_path
-    destination = "${local.execution_dir}/${local.script_file_name}"
+    source      = each.value.script_path
+    destination = "${each.value.execution_dir}/${each.value.script_file_name}"
 
     connection {
-      type        = "ssh"
-      user        = var.ssh_user
-      host        = var.ssh_host
-      port     = var.ssh_port
-      password = var.ssh_password
+      type     = "ssh"
+      host     = each.value.ssh_host
+      port     = each.value.ssh_port
+      user     = each.value.ssh_user
+      password = each.value.ssh_password
     }
   }
 
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ${local.execution_dir}/${local.script_file_name}",
-      "cd ${local.execution_dir} && ./${local.script_file_name} ${join(" ",var.script_arguments)}",
-      "if [ '${var.delete_script}' = true ]; then rm ${local.execution_dir}/${local.script_file_name}; fi",
-      "if [ '${var.delete_folder}' = true ]; then rm -rf ${local.execution_dir}; fi"
+      "chmod +x ${each.value.execution_dir}/${each.value.script_file_name}",
+      "cd ${each.value.execution_dir} && ./${each.value.script_file_name} ${join(" ", each.value.script_arguments)}",
+      "if [ '${each.value.delete_script}' = true ]; then rm ${each.value.execution_dir}/${each.value.script_file_name}; fi",
+      "if [ '${each.value.delete_folder}' = true ]; then rm -rf ${each.value.execution_dir}; fi"
     ]
 
     connection {
-      type        = "ssh"
-      user        = var.ssh_user
-      host        = var.ssh_host
-      port     = var.ssh_port
-      password = var.ssh_password
+      type     = "ssh"
+      host     = each.value.ssh_host
+      port     = each.value.ssh_port
+      user     = each.value.ssh_user
+      password = each.value.ssh_password
     }
   }
-
 }
