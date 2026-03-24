@@ -102,7 +102,10 @@ resource "null_resource" "fetch_kubeconfig" {
   provisioner "local-exec" {
     command = <<-EOT
       set -e
-      command -v sshpass > /dev/null 2>&1 || sudo apt-get install -y sshpass
+      if ! command -v sshpass > /dev/null 2>&1; then
+        echo "ERROR: sshpass is required to fetch kubeconfig. Install with: sudo apt-get install -y sshpass"
+        exit 1
+      fi
       _DEST=$(eval echo '${var.kubeconfig_path}')
       mkdir -p "$(dirname "$_DEST")"
       sshpass -p '${var.master.password}' scp -o StrictHostKeyChecking=no -P ${var.master.port} ${var.master.user}@${var.master.host}:~/.kube/config "$_DEST"
