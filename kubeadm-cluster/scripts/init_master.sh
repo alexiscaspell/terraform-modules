@@ -10,11 +10,11 @@ echo "=== Initializing Kubernetes control plane ==="
 # Clean up any previous installation
 kubeadm reset -f 2>/dev/null || true
 rm -rf /etc/cni/net.d /var/lib/etcd
+iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X 2>/dev/null || true
 
 USER_HOME=$(eval echo ~"${SUDO_USER:-$USER}")
 rm -rf "${USER_HOME}/.kube"
 
-# Build kubeadm init arguments
 INIT_ARGS="--pod-network-cidr=${POD_NETWORK_CIDR} --service-cidr=${SERVICE_CIDR}"
 
 if [ -n "$API_SERVER_SAN" ]; then
@@ -28,8 +28,14 @@ mkdir -p "${USER_HOME}/.kube"
 cp -f /etc/kubernetes/admin.conf "${USER_HOME}/.kube/config"
 chown "$(id -u "${SUDO_USER:-$USER}")":"$(id -g "${SUDO_USER:-$USER}")" "${USER_HOME}/.kube/config"
 
-# Install Flannel CNI
 export KUBECONFIG=/etc/kubernetes/admin.conf
+
+# Generate join command immediately after init so workers can use it
+kubeadm token create --print-join-command > /tmp/kubeadm_join_command.sh
+chmod 644 /tmp/kubeadm_join_command.sh
+echo "Join command saved to /tmp/kubeadm_join_command.sh"
+
+# Install Flannel CNI
 kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 
 echo "Waiting for control plane node to become Ready..."
@@ -43,17 +49,5 @@ for i in $(seq 1 60); do
 done
 
 kubectl get nodes
-
-# Save join command for workers
-kubeadm token create --print-join-command > /tmp/kubeadm_join_command.sh
-chmod 644 /tmp/kubeadm_join_command.sh
-
-# Save kubeconfig for external/remote access
-cp /etc/kubernetes/admin.conf /tmp/kubeadm_kubeconfig
-chmod 644 /tmp/kubeadm_kubeconfig
-
-if [ -n "$API_SERVER_SAN" ]; then
-  sed -i "s|server: https://.*:6443|server: https://${API_SERVER_SAN}:6443|" /tmp/kubeadm_kubeconfig
-fi
 
 echo "=== Control plane initialization complete ==="

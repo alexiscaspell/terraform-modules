@@ -15,7 +15,6 @@ Terraform module to provision a Kubernetes cluster using **kubeadm** with **cont
 
 - Ubuntu/Debian-based target nodes
 - SSH access with password authentication to all nodes
-- `sshpass` on the Terraform runner (only needed if `kubeconfig_path` is set)
 - Target nodes must have internet access
 
 ## Usage
@@ -43,7 +42,6 @@ module "kubernetes" {
   kubernetes_version = "1.31"
   api_server_san     = "k8s.example.com"
   cluster_name       = "my-cluster"
-  kubeconfig_path    = "~/.kube/my-cluster"
 }
 ```
 
@@ -58,15 +56,21 @@ module "kubernetes" {
 | `service_cidr` | Service network CIDR | `string` | `"10.96.0.0/12"` | no |
 | `api_server_san` | Extra SAN for API server cert (for external access) | `string` | `""` | no |
 | `cluster_name` | Cluster identifier | `string` | `"kubernetes"` | no |
-| `kubeconfig_path` | Local path to save kubeconfig (null to skip) | `string` | `null` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| `kubeconfig_path` | Path to the fetched kubeconfig file |
 | `master_host` | Control plane node host |
 | `api_server_endpoint` | Kubernetes API server endpoint |
+
+## Kubeconfig
+
+After provisioning, the kubeconfig is available on the master at `~/.kube/config`. To copy it locally:
+
+```bash
+scp user@master-host:~/.kube/config ~/.kube/my-cluster
+```
 
 ## Architecture
 
@@ -76,7 +80,6 @@ module "kubernetes" {
 │                                                     │
 │  1. SSH → master: install prereqs + kubeadm init    │
 │  2. SSH → workers: install prereqs + kubeadm join   │
-│  3. SCP ← master: fetch kubeconfig (optional)       │
 └─────────────────────────────────────────────────────┘
 
 ┌──────────────┐         ┌──────────────┐

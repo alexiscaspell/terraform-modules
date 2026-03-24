@@ -102,8 +102,10 @@ resource "null_resource" "fetch_kubeconfig" {
   provisioner "local-exec" {
     command = <<-EOT
       set -e
-      mkdir -p "$(dirname '${var.kubeconfig_path}')"
-      sshpass -p '${var.master.password}' scp -o StrictHostKeyChecking=no -P ${var.master.port} ${var.master.user}@${var.master.host}:/tmp/kubeadm_kubeconfig '${var.kubeconfig_path}'
+      command -v sshpass > /dev/null 2>&1 || sudo apt-get install -y sshpass
+      _DEST=$(eval echo '${var.kubeconfig_path}')
+      mkdir -p "$(dirname "$_DEST")"
+      sshpass -p '${var.master.password}' scp -o StrictHostKeyChecking=no -P ${var.master.port} ${var.master.user}@${var.master.host}:~/.kube/config "$_DEST"
     EOT
   }
 }

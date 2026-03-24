@@ -51,6 +51,6 @@ variable "cluster_name" {
 
 variable "kubeconfig_path" {
   type        = string
-  description = "Local path to save the kubeconfig file. Requires sshpass on the Terraform runner. Set to null to skip."
+  description = "Local path to save the kubeconfig file. Requires sshpass or expect on the Terraform runner. Set to null to skip."
   default     = null
 }
