@@ -28,8 +28,9 @@ EOF
 sysctl --system
 
 # ---- Base packages (conntrack required by kubeadm preflight) ----
-apt-get update
-apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release conntrack
+apt-get update -qq
+DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  apt-transport-https ca-certificates curl gnupg lsb-release conntrack
 
 # ---- Install containerd ----
 install -m 0755 -d /etc/apt/keyrings
@@ -41,30 +42,31 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.
   https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
   > /etc/apt/sources.list.d/docker.list
 
-apt-get update
-apt-get install -y containerd.io
+apt-get update -qq
+DEBIAN_FRONTEND=noninteractive apt-get install -y containerd.io
 
-# SystemdCgroup driver is required for kubeadm with systemd-based distros
+# ---- (Re)configure containerd with SystemdCgroup ----
+# Always regenerate config to ensure it's correct regardless of previous state
+systemctl stop containerd 2>/dev/null || true
 mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 
-systemctl restart containerd
 systemctl enable containerd
+systemctl restart containerd
 
-# Wait for containerd socket to be ready before returning
-echo "Waiting for containerd to be ready..."
+# ---- Wait for containerd socket to be ready ----
+echo "Waiting for containerd socket..."
 for i in $(seq 1 30); do
   if systemctl is-active --quiet containerd && [ -S /var/run/containerd/containerd.sock ]; then
-    echo "containerd is ready."
+    echo "containerd is ready (attempt ${i}/30)."
     break
   fi
   if [ "$i" -eq 30 ]; then
-    echo "ERROR: containerd did not become ready in time"
-    systemctl status containerd || true
+    echo "ERROR: containerd did not become ready after 60s"
+    systemctl status containerd --no-pager || true
     exit 1
   fi
-  echo "  Attempt ${i}/30 - waiting 2s..."
   sleep 2
 done
 
@@ -76,8 +78,10 @@ echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
   https://pkgs.k8s.io/core:/stable:/v${KUBERNETES_VERSION}/deb/ /" \
   > /etc/apt/sources.list.d/kubernetes.list
 
-apt-get update
-apt-get install -y kubelet kubeadm kubectl
+apt-get update -qq
+# Unhold before installing in case of version change
+apt-mark unhold kubelet kubeadm kubectl 2>/dev/null || true
+DEBIAN_FRONTEND=noninteractive apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl
 
 systemctl enable kubelet
