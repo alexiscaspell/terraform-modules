@@ -15,6 +15,22 @@ iptables -F && iptables -t nat -F && iptables -t mangle -F && iptables -X 2>/dev
 USER_HOME=$(eval echo ~"${SUDO_USER:-$USER}")
 rm -rf "${USER_HOME}/.kube"
 
+# kubeadm reset may have disturbed containerd - restart and wait before init
+echo "Restarting containerd after reset..."
+systemctl restart containerd
+for i in $(seq 1 30); do
+  if systemctl is-active --quiet containerd && ctr version > /dev/null 2>&1; then
+    echo "containerd ready (attempt ${i}/30)."
+    break
+  fi
+  if [ "$i" -eq 30 ]; then
+    echo "ERROR: containerd not ready after reset"
+    systemctl status containerd --no-pager || true
+    exit 1
+  fi
+  sleep 2
+done
+
 INIT_ARGS="--pod-network-cidr=${POD_NETWORK_CIDR} --service-cidr=${SERVICE_CIDR}"
 
 if [ -n "$API_SERVER_SAN" ]; then
