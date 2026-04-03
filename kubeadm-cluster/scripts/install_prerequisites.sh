@@ -27,10 +27,11 @@ EOF
 
 sysctl --system
 
-# ---- Install containerd ----
+# ---- Base packages (conntrack required by kubeadm preflight) ----
 apt-get update
-apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release conntrack
 
+# ---- Install containerd ----
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
   | gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
@@ -50,6 +51,21 @@ sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.to
 
 systemctl restart containerd
 systemctl enable containerd
+
+# Wait for containerd socket to be ready before returning
+echo "Waiting for containerd to be ready..."
+for i in $(seq 1 30); do
+  if crictl --runtime-endpoint unix:///var/run/containerd/containerd.sock info > /dev/null 2>&1; then
+    echo "containerd is ready."
+    break
+  fi
+  if [ "$i" -eq 30 ]; then
+    echo "ERROR: containerd did not become ready in time"
+    exit 1
+  fi
+  echo "  Attempt ${i}/30 - waiting 2s..."
+  sleep 2
+done
 
 # ---- Install kubeadm, kubelet, kubectl ----
 curl -fsSL "https://pkgs.k8s.io/core:/stable:/v${KUBERNETES_VERSION}/deb/Release.key" \
