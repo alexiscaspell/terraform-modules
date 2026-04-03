@@ -43,9 +43,9 @@ resource "null_resource" "master_setup" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/install_prerequisites.sh /tmp/init_master.sh",
-      "sudo bash -e /tmp/install_prerequisites.sh '${var.kubernetes_version}'",
-      "sudo bash -e /tmp/init_master.sh '${var.pod_network_cidr}' '${var.service_cidr}' '${var.api_server_san}'",
-      "rm -f /tmp/install_prerequisites.sh /tmp/init_master.sh",
+      "sudo bash -e /tmp/install_prerequisites.sh '${var.kubernetes_version}'; echo $? > /tmp/_exit; test $(cat /tmp/_exit) -eq 0",
+      "sudo bash -e /tmp/init_master.sh '${var.pod_network_cidr}' '${var.service_cidr}' '${var.api_server_san}'; echo $? > /tmp/_exit; test $(cat /tmp/_exit) -eq 0",
+      "rm -f /tmp/install_prerequisites.sh /tmp/init_master.sh /tmp/_exit",
     ]
   }
 }
@@ -82,9 +82,9 @@ resource "null_resource" "worker_setup" {
   provisioner "remote-exec" {
     inline = [
       "chmod +x /tmp/install_prerequisites.sh /tmp/join_worker.sh",
-      "sudo bash -e /tmp/install_prerequisites.sh '${var.kubernetes_version}'",
-      "sudo bash -e /tmp/join_worker.sh '${var.master.host}' '${var.master.port}' '${var.master.user}' '${var.master.password}'",
-      "rm -f /tmp/install_prerequisites.sh /tmp/join_worker.sh",
+      "sudo bash -e /tmp/install_prerequisites.sh '${var.kubernetes_version}'; echo $? > /tmp/_exit; test $(cat /tmp/_exit) -eq 0",
+      "sudo bash -e /tmp/join_worker.sh '${var.master.host}' '${var.master.port}' '${var.master.user}' '${var.master.password}'; echo $? > /tmp/_exit; test $(cat /tmp/_exit) -eq 0",
+      "rm -f /tmp/install_prerequisites.sh /tmp/join_worker.sh /tmp/_exit",
     ]
   }
 }

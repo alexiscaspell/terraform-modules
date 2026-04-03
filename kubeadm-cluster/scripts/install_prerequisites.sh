@@ -55,12 +55,13 @@ systemctl enable containerd
 # Wait for containerd socket to be ready before returning
 echo "Waiting for containerd to be ready..."
 for i in $(seq 1 30); do
-  if crictl --runtime-endpoint unix:///var/run/containerd/containerd.sock info > /dev/null 2>&1; then
+  if systemctl is-active --quiet containerd && [ -S /var/run/containerd/containerd.sock ]; then
     echo "containerd is ready."
     break
   fi
   if [ "$i" -eq 30 ]; then
     echo "ERROR: containerd did not become ready in time"
+    systemctl status containerd || true
     exit 1
   fi
   echo "  Attempt ${i}/30 - waiting 2s..."
