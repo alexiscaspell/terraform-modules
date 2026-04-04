@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.12"
+  required_version = ">= 1.4"
 
   required_providers {
     kubectl = {
@@ -19,31 +19,67 @@ terraform {
 
 provider "helm" {
   kubernetes = {
-    config_path = var.kubeconfig_path
+    config_path    = var.kubeconfig_path
+    config_context = var.kube_context
   }
 }
 
 provider "kubectl" {
-    load_config_file = true
-    config_path = var.kubeconfig_path
-    config_context = var.kube_context
+  config_path    = var.kubeconfig_path
+  config_context = var.kube_context
 }
 
 provider "kubernetes" {
-  config_path = var.kubeconfig_path
+  config_path    = var.kubeconfig_path
+  config_context = var.kube_context
 }
 
-# provider "helm" {
-#   kubernetes {
-#     config_path = var.kubeconfig_path
-#     config_context = var.kube_context
-#   }
-# }
+# Compute the bcrypt hash once and freeze it in state.
+# On subsequent applies the hash is read from state, so other helm sets
+# can still be updated without triggering a spurious password diff.
+resource "terraform_data" "admin_password_hash" {
+  count = var.admin_password != null ? 1 : 0
+  input = bcrypt(var.admin_password)
+
+  lifecycle {
+    ignore_changes = [input]
+  }
+}
+
+locals {
+  # Official chart key for admin password (bcrypt hash)
+  admin_password_set = var.admin_password != null ? {
+    "configs.secret.argocdServerAdminPassword" = terraform_data.admin_password_hash[0].output
+  } : {}
+
+  all_sets = merge(local.admin_password_set, var.sets)
+}
+
+resource "helm_release" "argocd" {
+  provider         = helm
+  chart            = "argo-cd"
+  name             = var.name
+  namespace        = var.namespace
+  create_namespace = true
+  # Official ArgoCD Helm chart — uses quay.io/argoproj images (always public)
+  repository       = "https://argoproj.github.io/argo-helm"
+  version          = var.argocd_version
+
+  atomic  = true
+  replace = true
+
+  set = [
+    for key, value in local.all_sets : {
+      name  = key
+      value = value
+    }
+  ]
+}
 
 resource "kubectl_manifest" "argocd_repository" {
-    count = length(var.repositories)
+  count = length(var.repositories)
 
-    yaml_body = <<EOF
+  yaml_body = <<EOF
 apiVersion: v1
 kind: Secret
 metadata:
@@ -57,13 +93,13 @@ stringData:
   password: ${var.repositories[count.index].password}
 EOF
 
-  depends_on = [ helm_release.argocd ]
+  depends_on = [helm_release.argocd]
 }
 
 resource "kubectl_manifest" "argocd_application" {
-    count = length(var.applications)
+  count = length(var.applications)
 
-    yaml_body = <<EOF
+  yaml_body = <<EOF
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -86,29 +122,5 @@ spec:
       selfHeal: true
 EOF
 
-    depends_on = [ helm_release.argocd , kubectl_manifest.argocd_repository]
+  depends_on = [helm_release.argocd, kubectl_manifest.argocd_repository]
 }
-
-resource "helm_release" "argocd" {
-  provider = helm
-  chart      = "argo-cd"
-  name       = var.name
-  namespace  = var.namespace
-  create_namespace = true
-  repository = "oci://registry-1.docker.io/bitnamicharts"
-  version  = var.argocd_version
-
-  # recreate_pods = true
-  # force_update  = true
-  atomic        = true
-  wait          = false
-  replace       = true
-
-  set = [
-    for key, value in var.sets : {
-      name  = key
-      value = value
-    }
-  ]
-}
-

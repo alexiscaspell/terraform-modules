@@ -23,10 +23,17 @@ variable "kube_context" {
   default     = "default"
 }
 
+variable "admin_password" {
+  description = "ArgoCD admin password in plain text (will be bcrypt-hashed internally)"
+  type        = string
+  sensitive   = true
+  default     = null
+}
+
 variable "sets" {
   description = "Variables of values.yaml to replace in Helm chart"
-  type    = map
-  default = {}
+  type        = map(string)
+  default     = {}
 }
 
 variable "repositories" {

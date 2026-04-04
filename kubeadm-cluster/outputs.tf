@@ -12,3 +12,9 @@ output "kubeconfig_path" {
   value       = var.kubeconfig_path
   description = "Local path where the kubeconfig was saved (null if skipped)"
 }
+
+output "kubeconfig" {
+  value       = var.kubeconfig_path != null ? data.local_sensitive_file.kubeconfig[0].content : null
+  description = "Content of the kubeconfig file (null if kubeconfig_path was not set)"
+  sensitive   = true
+}
